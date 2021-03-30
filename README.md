@@ -18,7 +18,7 @@ User can choose the minimum release year they want the recommended tracks to hav
 5. Creates playlist
 6. Populates playlist
 
-,,,python
+```python
 
 import pandas as pd
 import spotipy
@@ -228,4 +228,4 @@ response = requests.post(url=tracks_to_list_url, data=request_body, headers={"Co
 
 print(f'Your playlist is ready at {url}')
 
-,,,
+```
