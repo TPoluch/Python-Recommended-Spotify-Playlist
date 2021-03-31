@@ -1,31 +1,25 @@
-import pandas as pd
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.oauth2 import SpotifyOAuth
 import requests
 import json
-import numpy as np
 import datetime
 import random
 
-# User specific/preference variables
-# MUST ADD SPOTIPY ENV VARIABLES
-# SPOTIPY_CLIENT_ID: 'your_client_id'
-# SPOTIPY_CLIENT_SECRET: 'your_client_secret'
-# SPOTIPY_REDIRECT_URI: 'your_redirect_url'
+# USER VARIABLES
+client_id = 'bd869dba3ccb42cab2367dba4d9bf54b'
+client_secret = '13e2c78c84e243819d8d5c4b26488f74'
+redirect_uri = 'http://127.0.0.1:808'
+user_id = "22iaaj7zp7zoxkfr5j65pu5qi"
 
-client_id = 'your_client_id'
-client_secret = 'your_client_secret'
-redirect_uri = 'your_redirect_url'
-user_id = "your_user_id"
-sample_size = 15 # number of songs from each time span (short,medium,long) to use as base for creating target audio features
-pull_songs_released_in_last_n_years = 5 # only add songs from n years ago and after
+# PREFERENCE VARIABLES
+sample_size = 10  # number of songs from each time span (short,medium,long)
+n_years = 5  # only add songs released within the  last n years
+limit = 5  # number of recommended songs to pull for each seed track
 playlist_name = 'Python Recommended'
-genres = ["hip-hop", "happy", "party", "pop", "chill"]  #link to possible genres -- https://developer.spotify.com/console/get-available-genre-seeds/
-limit = 100  #number of songs from each genre
+max_playlist_len = 75
 
-# Get First Token
-
+# GET TOKEN FOR API CALLS THAT DON'T REQUIRE USER AUTHORIZATION
 AUTH_URL = 'https://accounts.spotify.com/api/token'
 
 auth_response = requests.post(AUTH_URL, {
@@ -38,19 +32,28 @@ auth_response_data = auth_response.json()
 access_token = auth_response_data['access_token']
 token = access_token
 
-# Read top 50 tracks from short,medium, and long time spans and find the weighted average audio attr values
-# Weighting from highest to lowest is long-short time span and then the rank of the individual within each of those time spans respectively
-
 auth_manager = SpotifyClientCredentials(client_id=client_id,
                                         client_secret=client_secret)
+
+# STEP 1 - PULL TOP [sample_size] TRACKS FOR EACH TIME SPAN
+
+# VARIABLES
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                client_secret=client_secret,
                                                scope='user-library-read', redirect_uri=redirect_uri))
-
+recommendations_url = "https://api.spotify.com/v1/recommendations?"
+market = "US"
+uris_list = []
+list_one = []
+release_date_min = datetime.datetime.now() - datetime.timedelta(days=n_years * 365)
 ranges = ['short_term', 'medium_term', 'long_term']
+
+# LOOP THROUGH EACH TIME SPAN PULLING [sample_size] AMOUNT OF TRACKS AND THEIR DETAILS TO CREATE A LIST
 for sp_range in ranges:
     results = sp.current_user_top_tracks(time_range=sp_range, limit=sample_size)
     for i, item in enumerate(results['items']):
+
+        # CREATE NEW RANK FOR TRACKS TO TAKE INTO ACCOUNT THEIR TIME SPAN
         if sp_range == 'short_term':
             range = 1
         elif sp_range == 'medium_term':
@@ -59,16 +62,14 @@ for sp_range in ranges:
             range = 3
         time_range = range + (sample_size - i) / 100
         track_info = sp.track(item['id'])
-        rank = int(i)
+        rank = int(range) * 10 + ((limit - 1) - int(i))
         track_features = sp.audio_features(item['id'])
-
-        track_id = track_info['id']
+        seed = track_info['id']
         name = track_info['name']
         album = track_info['album']['name']
         artist = track_info['album']['artists'][0]['name']
         release_date = track_info['album']['release_date']
         popularity = track_info['popularity']
-
         acousticness = track_features[0]['acousticness']
         danceability = track_features[0]['danceability']
         energy = track_features[0]['energy']
@@ -78,26 +79,42 @@ for sp_range in ranges:
         liveness = track_features[0]['liveness']
         tempo = track_features[0]['tempo']
         valence = track_features[0]['valence']
+        list_one.append([rank, seed, time_range, acousticness, danceability, energy, loudness, speechiness,
+                         instrumentalness, liveness, tempo, valence])
+        list_one.sort(reverse=True)
 
-        track = [rank, track_id, time_range, acousticness, danceability, energy, loudness, speechiness,
-                 instrumentalness, liveness, tempo, valence]
+        # STEP 2 - PULL IN [limit] AMOUNT OF RECOMMENDED TRACKS FOR EACH TRACK FROM ABOVE
 
-        df = pd.DataFrame(track).T.values.tolist()
-        df_final = pd.DataFrame(df, columns=['rank', 'track_id', 'time_range', 'acousticness', 'danceability',
-                                             'energy', 'loudness', 'speechiness', 'instrumentalness',
-                                             'liveness', 'tempo', 'valence'])
+        # USE TRACK FROM ABOVE AS THE SEED AND ITS AUDIO FEATURES AS TARGET AUDIO FEATURES
+        query = f'{recommendations_url}limit={limit}&market={market}&seed_tracks={seed}&target_acousticness={acousticness}' \
+                f'&target_danceability={danceability}&target_energy={energy}&target_loudness={loudness}' \
+                f'&target_speechiness={speechiness}&target_instrumentalness={instrumentalness}&target_liveness={liveness}' \
+                f'&target_tempo={tempo}&target_valence={valence}'
+        response = requests.get(query,
+                                headers={"Content-Type": "application/json",
+                                         "Authorization": f"Bearer {token}"})
+        json_response = response.json()
 
-target_acousticness = round(np.average(df_final['acousticness'], weights=df_final['time_range']), 4)
-target_danceability = round(np.average(df_final['danceability'], weights=df_final['time_range']), 4)
-target_energy = round(np.average(df_final['energy'], weights=df_final['time_range']), 4)
-target_loudness = round(np.average(df_final['loudness'], weights=df_final['time_range']), 4)
-target_speechiness = round(np.average(df_final['speechiness'], weights=df_final['time_range']), 4)
-target_instrumentalness = round(np.average(df_final['instrumentalness'], weights=df_final['time_range']), 4)
-target_liveness = round(np.average(df_final['liveness'], weights=df_final['time_range']), 4)
-target_tempo = round(np.average(df_final['tempo'], weights=df_final['time_range']), 4)
-target_valence = round(np.average(df_final['valence'], weights=df_final['time_range']), 4)
+        # PULL RECOMMENDED TRACKS URIS'
+        for y, j in enumerate(json_response['tracks']):
+            r_date_str = (j['album']['release_date'])
+            uri_original = (j['uri'])
 
-# Get current songs library to compare with recommended set
+            # CLEAN RELEASE_DATE FIELD AND CHANGE ITS TYPE TO DATETIME; FILTER OUT ANY TRACKS > n_years OLD
+            if len(r_date_str) == 4:
+                r_date_str = r_date_str[:4]
+                r_date_dt = datetime.datetime.strptime(r_date_str, "%Y")
+            elif len(r_date_str) == 7:
+                r_date_str = r_date_str[:7]
+                r_date_dt = datetime.datetime.strptime(r_date_str, "%Y-%m")
+            else:
+                r_date_dt = datetime.datetime.strptime(r_date_str, "%Y-%m-%d")
+
+            if r_date_dt >= release_date_min:
+                uris_list.append(uri_original)
+                print(f"{y + 1}) \"{j['name']}\" by {j['artists'][0]['name']}")
+
+# STEP 3 - GET CURRENT USERS LIBRARY AND COMPARE WITH RECOMMENDED TRACKS SET TO FILTER OUT SONGS USER ALREADY HAS
 
 library_scope = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                           client_secret=client_secret,
@@ -105,6 +122,8 @@ library_scope = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                           redirect_uri=redirect_uri))
 tracks_list = []
 
+
+# LOOP TO GET AROUND THE LIMIT ON AMOUNT OF TRACKS RETRIEVED FROM LIBRARY
 def show_tracks(results):
     for item1 in results['items']:
         track_uri = item1['track']
@@ -118,92 +137,56 @@ while results['next']:
     results = library_scope.next(results)
     show_tracks(results)
 
+# SET OF ALL USERS TRACKS
 tracks_set = set(tracks_list)
+print("Tracks in user library: " + str(len(tracks_set)))
 
-# Get recommended set
-
-recommendations_url = "https://api.spotify.com/v1/recommendations?"
-market = "US"
-uris_list = []
-
-release_date_min = datetime.datetime.now() - datetime.timedelta(days=pull_songs_released_in_last_n_years*365)
-
-for genre in genres:
-    query = f'{recommendations_url}limit={limit}&market={market}&seed_genres={genre}&target_acousticness={target_acousticness}' \
-            f'&target_danceability={target_danceability}&target_energy={target_energy}&target_loudness={target_loudness}' \
-            f'&target_speechiness={target_speechiness}&target_instrumentalness={target_instrumentalness}&target_liveness={target_liveness}' \
-            f'&target_tempo={target_tempo}&target_valence={target_valence}'
-    response = requests.get(query,
-                            headers={"Content-Type": "application/json",
-                                     "Authorization": f"Bearer {token}"})
-    json_response = response.json()
-    for i, j in enumerate(json_response['tracks']):
-        r_date_str = (j['album']['release_date'])
-        uri_original = (j['uri'])
-
-        # filtering any songs out that are older than the min release date wanted
-
-        if len(r_date_str) == 4:
-            r_date_str = r_date_str[:4]
-            r_date_dt = datetime.datetime.strptime(r_date_str, "%Y")
-        elif len(r_date_str) == 7:
-            r_date_str = r_date_str[:7]
-            r_date_dt = datetime.datetime.strptime(r_date_str, "%Y-%m")
-        else:
-            r_date_dt = datetime.datetime.strptime(r_date_str, "%Y-%m-%d")
-
-        if r_date_dt >= release_date_min:
-            uris_list.append(uri_original)
-            print(genre+" - "+f"{i + 1}) \"{j['name']}\" by {j['artists'][0]['name']}")
-
-# Make sure recommended songs are not already in users library
-
-
+# FILTER OUT ANY RECOMMENDED SONGS THAT THE USER ALREADY HAS
 uris_to_set = set(uris_list)
 uri = list(uris_to_set.difference(tracks_set))
+print("Recommended tracks: " + str(len(uris_to_set)))
+print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
 
-# Max playlist length is 75
-
-if len(uri)>75:
+# SETTING MAX PLAYLIST LENGTH
+if len(uri) > max_playlist_len:
     random.shuffle(uri)
     uri = uri[:75]
 else:
-    random.shuffle(uri)
-print(uri)
+    uri = uri
 
-# Create Playlist (need new token for write access)
+# STEP 4 - CREATE PLAYLIST
 
+# USER PROMPT TO GET NEW TOKEN (next steps require a token that has been authenticated by the user)
 webpage_for_token = f"https://developer.spotify.com/console/post-playlists/"
+# in redirect site copy the "OAuth Token" in
+# the box to the left of the green "Get Token" button
 print("Go here and grab token: " + webpage_for_token)
 token_input = input("Enter token: ")
 print("Enter token: " + token_input)
 print(token_input)
 token2 = token_input
 
+# PLAYLIST CREATION
 playlist_endpoint = f"https://api.spotify.com/v1/users/{user_id}/playlists"
-
 request_body = json.dumps({
     "name": playlist_name,
     "description": str(datetime.datetime.now()),
     "public": False
 })
 response = requests.post(url=playlist_endpoint, data=request_body, headers={"Content-Type": "application/json",
-                                                                        "Authorization": f"Bearer {token2}"})
+                                                                            "Authorization": f"Bearer {token2}"})
 
 url = response.json()['external_urls']['spotify']
 
-# Add songs to playlist
+# STEP 5 - ADD SONGS TO THE PLAYLIST
 
 playlist_id = response.json()['id']
-
-tracks_to_list_url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-
+add_songs = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
 request_body = json.dumps({
     "uris": uri
 })
-response = requests.post(url=tracks_to_list_url, data=request_body, headers={"Content-Type": "application/json",
-                                                                        "Authorization": f"Bearer {token2}"})
+response = requests.post(url=add_songs, data=request_body, headers={"Content-Type": "application/json",
+                                                                    "Authorization": f"Bearer {token2}"})
 
 print(f'Your playlist is ready at {url}')
-
 
