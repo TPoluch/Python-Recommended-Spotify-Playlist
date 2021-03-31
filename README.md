@@ -1,4 +1,4 @@
-# Generates a User-Unique Spotify Playlist
+# User-Unique Recommended Songs Playlist in Spotify
 
 This python script generates a playlist tailored to the users music tastes through use of Spotify's API. It deciphers the users music preferences through analysis of their favorite songs, audio feature tendencies, and other key factors.
 
