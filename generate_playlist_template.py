@@ -6,11 +6,16 @@ import json
 import datetime
 import random
 
+# MUST ADD SPOTIPY ENV VARIABLES
+# SPOTIPY_CLIENT_ID: 'your_client_id'
+# SPOTIPY_CLIENT_SECRET: 'your_client_secret'
+# SPOTIPY_REDIRECT_URI: 'your_redirect_url'
+
 # USER VARIABLES
-client_id = 'bd869dba3ccb42cab2367dba4d9bf54b'
-client_secret = '13e2c78c84e243819d8d5c4b26488f74'
-redirect_uri = 'http://127.0.0.1:808'
-user_id = "22iaaj7zp7zoxkfr5j65pu5qi"
+client_id = 'your_client_id'
+client_secret = 'your_client_secret'
+redirect_uri = 'your_redirect_url'
+user_id = 'your_user_id'
 
 # PREFERENCE VARIABLES
 sample_size = 10  # number of songs from each time span (short,medium,long)
