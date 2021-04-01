@@ -17,6 +17,7 @@ client_id = 'your_client_id'
 client_secret = 'your_client_secret'
 redirect_uri = 'your_redirect_url'
 user_id = "your_user_id"
+archive_file = 'your_desktop_filepath'
 
 # PREFERENCE VARIABLES
 sample_size = 10  # number of songs from each time span (short,medium,long)
@@ -74,7 +75,7 @@ if str(input_source) == "B" or str(input_source) == "b":
             valid_input = True
         else:
             print("Invalid playlist name. Please try again")
-    print("Retrieving playlist...")
+    print("Fetching playlist...")
     playlists = sp.user_playlists(username)
 
     # GET PLAYLIST_ID
@@ -212,6 +213,7 @@ else:
                     uris_list.append(uri_original)
 
 # STEP 3 - GET CURRENT USERS LIBRARY AND COMPARE WITH RECOMMENDED TRACKS SET TO FILTER OUT SONGS USER ALREADY HAS
+
 if len(input_playlist_list) > 1:
     print(" " '\n'
           "********************** PLAYLIST NAME NOT UNIQUE *****************************" '\n'
@@ -226,78 +228,116 @@ if len(input_playlist_list) > 1:
         input_url = f'https://open.spotify.com/playlist/{input_link}'
         print(input_playlist_name+" ("+str(input_number)+") : "+input_url)
 
+
 else:
+    print("Analyzing...")
 
-    library_scope = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
-                                                              client_secret=client_secret,
-                                                              scope='user-library-read', redirect_uri=redirect_uri))
-    tracks_list = []
-
-
-    # LOOP TO GET AROUND THE LIMIT ON AMOUNT OF TRACKS RETRIEVED FROM LIBRARY
-    def show_tracks(results):
-        for item1 in results['items']:
-            track_uri = item1['track']
-            tracks_list.append(track_uri['uri'])
+library_scope = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
+                                                          client_secret=client_secret,
+                                                          scope='user-library-read', redirect_uri=redirect_uri))
+tracks_list = []
 
 
-    results = library_scope.current_user_saved_tracks()
+# LOOP TO GET AROUND THE LIMIT ON AMOUNT OF TRACKS RETRIEVED FROM LIBRARY
+def show_tracks(results):
+    for item1 in results['items']:
+        track_uri = item1['track']
+        tracks_list.append(track_uri['uri'])
+
+
+results = library_scope.current_user_saved_tracks()
+show_tracks(results)
+
+while results['next']:
+    results = library_scope.next(results)
     show_tracks(results)
 
-    while results['next']:
-        results = library_scope.next(results)
-        show_tracks(results)
+# CREATE SET OF ALL USERS TRACKS
+tracks_set = set(tracks_list)
+print("Tracks in user library: " + str(len(tracks_set)))
+uris_to_set = set(uris_list)
+archive_set = set()
+uri_takeout_archive = set()
+uri = []
 
-    # CREATE SET OF ALL USERS TRACKS
-    tracks_set = set(tracks_list)
-    print("Tracks in user library: " + str(len(tracks_set)))
+print("Exclude songs that were recommended in previous executions?")
+archive_activation = pyinputplus.inputYesNo(prompt="Please enter yes or no: ",yesVal='yes',noVal='no', caseSensitive=False)
 
-    # FILTER OUT ANY RECOMMENDED SONGS THAT THE USER ALREADY HAS
-    uris_to_set = set(uris_list)
+if archive_activation == 'yes':
+    archive_list = []
+    archive_set = set()
+    file_input = open(archive_file+"Old_Recommended_Tracks.txt", "r")
+    for file_i in file_input:
+        file_i.split('| ')
+        archive_list.append(file_i)
+    file_input.close()
+    archive_set = set(archive_list)
+    uri_takeout_archive = uris_to_set.difference(archive_set)
+    uri = list(uri_takeout_archive.difference(tracks_set))
+
+else:
+    print("archive function not activated")
     uri = list(uris_to_set.difference(tracks_set))
-    print("Recommended tracks: " + str(len(uris_to_set)))
-    print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
 
-    # SETTING MAX PLAYLIST LENGTH
-    if len(uri) > max_playlist_len:
-        random.shuffle(uri)
-        uri = uri[:75]
-    else:
-        uri = uri
+# FILTER OUT ANY RECOMMENDED SONGS THAT THE USER ALREADY HAS
+print("Recommended tracks: " + str(len(uris_to_set)))
+print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
 
-    # STEP 4 - CREATE PLAYLIST
+# SETTING MAX PLAYLIST LENGTH
+if len(uri) > max_playlist_len:
+    random.shuffle(uri)
+    uri = uri[:75]
+else:
+    uri = uri
 
-    # USER PROMPT TO GET NEW TOKEN (next steps need a token that requires user authentication)
-    webpage_for_token = f"https://developer.spotify.com/console/post-playlists/"
+# STEP 4 - CREATE PLAYLIST
 
-    # in redirect site copy the "OAuth Token" in the box to the left of the green "Get Token" button
-    print("Go here and grab token: " + webpage_for_token)
-    token_input = input("Enter token: ")
-    token2 = token_input
+# USER PROMPT TO GET NEW TOKEN (next steps need a token that requires user authentication)
+webpage_for_token = f"https://developer.spotify.com/console/post-playlists/"
 
-    # PLAYLIST CREATION
-    playlist_endpoint = f"https://api.spotify.com/v1/users/{user_id}/playlists"
-    playlist_name = input("Name your new playlist: ")
-    request_body = json.dumps({
-        "name": playlist_name,
-        "description": str(datetime.datetime.now()),
-        "public": False
-    })
-    response = requests.post(url=playlist_endpoint, data=request_body, headers={"Content-Type": "application/json",
-                                                                                "Authorization": f"Bearer {token2}"})
+# in redirect site copy the "OAuth Token" in the box to the left of the green "Get Token" button
+print("Go here and grab token: " + webpage_for_token)
+token_input = input("Enter token: ")
+token2 = token_input
 
-    url = response.json()['external_urls']['spotify']
+# PLAYLIST CREATION
+playlist_endpoint = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+playlist_name = input("Name your new playlist: ")
+request_body = json.dumps({
+    "name": playlist_name,
+    "description": str(datetime.datetime.now()),
+    "public": False
+})
+response = requests.post(url=playlist_endpoint, data=request_body, headers={"Content-Type": "application/json",
+                                                                            "Authorization": f"Bearer {token2}"})
 
-    # STEP 5 - ADD SONGS TO THE PLAYLIST
+url = response.json()['external_urls']['spotify']
 
-    playlist_id = response.json()['id']
-    add_songs = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-    request_body = json.dumps({
-        "uris": uri
-    })
-    response = requests.post(url=add_songs, data=request_body, headers={"Content-Type": "application/json",
-                                                                        "Authorization": f"Bearer {token2}"})
+# STEP 5 - ADD SONGS TO THE PLAYLIST
 
-    print(f'Your playlist is ready at {url}')
-    
-    
+playlist_id = response.json()['id']
+add_songs = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+request_body = json.dumps({
+    "uris": uri
+})
+response = requests.post(url=add_songs, data=request_body, headers={"Content-Type": "application/json",
+                                                                    "Authorization": f"Bearer {token2}"})
+
+print(f'Your playlist is ready at {url}')
+
+if archive_activation == 'yes':
+    uri_archive_str = '| '.join(uri)
+    f = open(archive_file+"Old_Recommended_Tracks.txt",
+             "a")
+    f.write(uri_archive_str)
+    f.close()
+    f2 = open(archive_file + playlist_name + '.txt', "x")
+    f2.write(uri_archive_str)
+    f2.close()
+    print('Enjoy!')
+else:
+    uri_archive_str = '| '.join(uri)
+    f2 = open(archive_file + playlist_name + '.txt', "x")
+    f2.write(uri_archive_str)
+    f2.close()
+    print('Enjoy!')
