@@ -5,7 +5,7 @@ This python script generates a playlist tailored to the users music tastes throu
 # How it works:
 
 1. User chooses what will act as the foundation for the script to build their preferences profile from - either historic data or a specific playlist. 
-    * Historic Data: Reads the top 'n' tracks and their related details for tracks listened to by the user over 3 time spans - short-term, medium-term, long-term (assigns a rank 1,2,3...n based on most-least listened to for each time span)
+    * Historic Data: Reads the top 'n' tracks and their related details for tracks listened to by the user over 3 time spans - short-term, medium-term, long-term (assigns a rank to each track 1,2,3...n based on most-least listened to for each time span)
     * Playlist: User is prompted to enter the playlist name and then the the tracks within the playlist and their details are retrieved.
     * User input: There is a validation step built in to verify the users playlist name is actually a playlist within the users profile. If user enters incorrect playlist name then they will be prompted to retry. If they enter a playlist name and the script identifies they have 2 playlists with the same name then they will be notified, given links to each playlist, and asked to change their names and start over.
 2. Each track pulled in step 1 gets 'n' recommended tracks by using the track as a "seed track" and using its audio features (energy, danceability, loudness, etc) values as the target aduio feature values for the possible recommended songs. Data is then processed and recommended tracks are identified.
