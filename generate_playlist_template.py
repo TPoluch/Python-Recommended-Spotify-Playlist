@@ -285,7 +285,7 @@ print("Recommended tracks: " + str(len(uris_to_set)))
 print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
 
 # SETTING MAX PLAYLIST LENGTH
-if len(uri) > max_playlist_len:
+if max_playlist_len != None and len(uri) > int(max_playlist_len):
     random.shuffle(uri)
     uri = uri[:75]
 else:
