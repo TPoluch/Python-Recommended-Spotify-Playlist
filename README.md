@@ -249,7 +249,7 @@ if len(input_playlist_list) > 1:
           "********************** PLAYLIST NAME NOT UNIQUE *****************************" '\n'
           "-- " + str(len(input_playlist_list)) + " playlists used as source playlist --" '\n'
           "CAUSE: more than one playlists with the name " + "'" + input_playlist_name + "'" '\n'
-          "FIX: rename one of them and try again" '\n'
+          "FIX: rename them and try again" '\n'
           " " '\n'
           "links for the playlists are below: ")
     for e, input_index in enumerate(input_playlist_list):
