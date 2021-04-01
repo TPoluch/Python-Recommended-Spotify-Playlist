@@ -227,6 +227,7 @@ if len(input_playlist_list) > 1:
         input_link = input_playlist_list[e]
         input_url = f'https://open.spotify.com/playlist/{input_link}'
         print(input_playlist_name+" ("+str(input_number)+") : "+input_url)
+    exit()
 
 
 else:
