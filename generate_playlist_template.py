@@ -6,24 +6,19 @@ import json
 import datetime
 import random
 import pyinputplus
-
-# MUST ADD SPOTIPY ENV VARIABLES
-# SPOTIPY_CLIENT_ID: 'your_client_id'
-# SPOTIPY_CLIENT_SECRET: 'your_client_secret'
-# SPOTIPY_REDIRECT_URI: 'your_redirect_url'
+import time
 
 # USER CREDENTIALS
-client_id = 'your_client_id'
-client_secret = 'your_client_secret'
-redirect_uri = 'your_redirect_url'
-user_id = "your_user_id"
-archive_file = 'your_desktop_filepath'
+client_id = 'bd869dba3ccb42cab2367dba4d9bf54b'
+client_secret = '13e2c78c84e243819d8d5c4b26488f74'
+redirect_uri = 'http://127.0.0.1:8080'
+user_id = '22iaaj7zp7zoxkfr5j65pu5qi'
 
 # PREFERENCE VARIABLES
-sample_size = 10  # number of songs from each time span (short,medium,long)
+sample_size = 15  # number of songs from each time span (short,medium,long)
 n_years = 5  # only add songs released within the  last n years
-limit = 5  # number of recommended songs to pull for each seed track
-max_playlist_len = 75
+limit = 10  # number of recommended songs to pull for each seed track
+max_playlist_len = None
 
 # RETRIEVE TOKEN FOR API CALLS THAT DON'T REQUIRE USER AUTHORIZATION
 AUTH_URL = 'https://accounts.spotify.com/api/token'
@@ -39,6 +34,7 @@ auth_manager = SpotifyClientCredentials(client_id=client_id,
                                         client_secret=client_secret)
 
 # VARIABLES
+archive_file = '/Users/anthonypoluch/Documents/Spotify/Spotipy/archived_recommended_tracks/'
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                client_secret=client_secret,
                                                scope='user-top-read', redirect_uri=redirect_uri))
@@ -75,7 +71,7 @@ if str(input_source) == "B" or str(input_source) == "b":
             valid_input = True
         else:
             print("Invalid playlist name. Please try again")
-    print("Fetching playlist...")
+    print("Fetching playlist...🏃‍️💨😰")
     playlists = sp.user_playlists(username)
 
     # GET PLAYLIST_ID
@@ -144,7 +140,7 @@ if str(input_source) == "B" or str(input_source) == "b":
 
 # IF USING HISTORIC DATA
 else:
-
+    print("Fetching historic data...🏃‍️💨😰")
     # LOOP THROUGH EACH TIME SPAN PULLING [sample_size] AMOUNT OF TRACKS AND THEIR DETAILS TO CREATE A LIST
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                    client_secret=client_secret,
@@ -216,12 +212,12 @@ else:
 
 if len(input_playlist_list) > 1:
     print(" " '\n'
-          "********************** PLAYLIST NAME NOT UNIQUE *****************************" '\n'
-          "-- " + str(len(input_playlist_list)) + " playlists used as source playlist --" '\n'
+          "⛔️⛔️⛔️⛔️⛔️⛔️⛔️ PLAYLIST NAME NOT UNIQUE ⛔️⛔️⛔️⛔️⛔️⛔️⛔️️" '\n'
+          " " '\n'
           "CAUSE: more than one playlists with the name " + "'" + input_playlist_name + "'" '\n'
           "FIX: rename them and try again" '\n'
           " " '\n'
-          "links for the playlists are below: ")
+          "playlist links: ")
     for e, input_index in enumerate(input_playlist_list):
         input_number = e + 1
         input_link = input_playlist_list[e]
@@ -229,9 +225,8 @@ if len(input_playlist_list) > 1:
         print(input_playlist_name+" ("+str(input_number)+") : "+input_url)
     exit()
 
-
 else:
-    print("Analyzing...")
+    print("Analyzing...🧐🤨🧑‍💻")
 
 library_scope = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                           client_secret=client_secret,
@@ -255,7 +250,6 @@ while results['next']:
 
 # CREATE SET OF ALL USERS TRACKS
 tracks_set = set(tracks_list)
-print("Tracks in user library: " + str(len(tracks_set)))
 uris_to_set = set(uris_list)
 archive_set = set()
 uri_takeout_archive = set()
@@ -277,10 +271,11 @@ if archive_activation == 'yes':
     uri = list(uri_takeout_archive.difference(tracks_set))
 
 else:
-    print("archive function not activated")
+    print("archive filter inactive")
     uri = list(uris_to_set.difference(tracks_set))
 
 # FILTER OUT ANY RECOMMENDED SONGS THAT THE USER ALREADY HAS
+print("Tracks in user library: " + str(len(tracks_set)))
 print("Recommended tracks: " + str(len(uris_to_set)))
 print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
 
@@ -335,10 +330,10 @@ if archive_activation == 'yes':
     f2 = open(archive_file + playlist_name + '.txt', "x")
     f2.write(uri_archive_str)
     f2.close()
-    print('Enjoy!')
+    print('Enjoy ‼️😎🤌🤙✌️🎶🎧🎸')
 else:
     uri_archive_str = '| '.join(uri)
     f2 = open(archive_file + playlist_name + '.txt', "x")
     f2.write(uri_archive_str)
     f2.close()
-    print('Enjoy!')
+    print('Enjoy ‼️😎🤌🤙✌️🎶🎧🎸')
