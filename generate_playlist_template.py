@@ -6,7 +6,6 @@ import json
 import datetime
 import random
 import pyinputplus
-import time
 
 # USER CREDENTIALS
 client_id = 'bd869dba3ccb42cab2367dba4d9bf54b'
