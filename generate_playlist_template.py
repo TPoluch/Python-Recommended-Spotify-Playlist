@@ -34,7 +34,6 @@ auth_manager = SpotifyClientCredentials(client_id=client_id,
                                         client_secret=client_secret)
 
 # VARIABLES
-archive_file = '/Users/anthonypoluch/Documents/Spotify/Spotipy/archived_recommended_tracks/'
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                client_secret=client_secret,
                                                scope='user-top-read', redirect_uri=redirect_uri))
