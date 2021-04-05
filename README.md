@@ -38,16 +38,17 @@ import random
 import pyinputplus
 
 # USER CREDENTIALS
-client_id = 'bd869dba3ccb42cab2367dba4d9bf54b'
-client_secret = '13e2c78c84e243819d8d5c4b26488f74'
-redirect_uri = 'http://127.0.0.1:8080'
-user_id = '22iaaj7zp7zoxkfr5j65pu5qi'
+client_id = 'your_client_id'
+client_secret = 'your_client_secret'
+redirect_uri = 'your_redirect_url'
+user_id = "your_user_id"
+archive_file = 'your_desktop_filepath'
 
 # PREFERENCE VARIABLES
-sample_size = 15  # number of songs from each time span (short,medium,long)
+sample_size = 20  # number of songs from each time span (short,medium,long)
 n_years = 5  # only add songs released within the  last n years
-limit = 10  # number of recommended songs to pull for each seed track
-max_playlist_len = None
+limit = 15  # number of recommended songs to pull for each seed track
+max_playlist_len = 75
 
 # RETRIEVE TOKEN FOR API CALLS THAT DON'T REQUIRE USER AUTHORIZATION
 AUTH_URL = 'https://accounts.spotify.com/api/token'
@@ -309,9 +310,9 @@ print("Recommended tracks: " + str(len(uris_to_set)))
 print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
 
 # SETTING MAX PLAYLIST LENGTH
-if max_playlist_len != None and len(uri) > int(max_playlist_len):
+if len(uri) > int(max_playlist_len):
     random.shuffle(uri)
-    uri = uri[:75]
+    uri = uri[:int(max_playlist_len)]
 else:
     uri = uri
 
@@ -366,5 +367,6 @@ else:
     f2.write(uri_archive_str)
     f2.close()
     print('Enjoy ‼️😎🤌🤙✌️🎶🎧🎸')
+
 
 ```
