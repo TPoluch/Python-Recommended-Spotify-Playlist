@@ -84,6 +84,61 @@ input_playlist_name = str()
 
 # STEP 1 - DECIDE BETWEEN HISTORIC DATA OR SPECIFIC PLAYLIST
 print("Which source would you prefer the script use to build your music taste profile?" '\n'
+      "A) Historic data" '\n'import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyOAuth
+import requests
+import json
+import datetime
+import random
+import pyinputplus
+
+# USER CREDENTIALS
+client_id = 'your_client_id'
+client_secret = 'your_client_secret'
+redirect_uri = 'your_redirect_url'
+user_id = "your_user_id"
+archive_file = 'your_desktop_filepath'
+
+# PREFERENCE VARIABLES
+sample_size = 20  # number of songs from each time span (short,medium,long)
+n_years = 5  # only add songs released within the  last n years
+limit = 15  # number of recommended songs to pull for each seed track
+max_playlist_len = 75
+
+# RETRIEVE TOKEN FOR API CALLS THAT DON'T REQUIRE USER AUTHORIZATION
+AUTH_URL = 'https://accounts.spotify.com/api/token'
+auth_response = requests.post(AUTH_URL, {
+    'grant_type': 'client_credentials',
+    'client_id': client_id,
+    'client_secret': client_secret,
+})
+auth_response_data = auth_response.json()
+access_token = auth_response_data['access_token']
+token = access_token
+auth_manager = SpotifyClientCredentials(client_id=client_id,
+                                        client_secret=client_secret)
+
+# VARIABLES
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
+                                               client_secret=client_secret,
+                                               scope='user-top-read', redirect_uri=redirect_uri))
+recommendations_url = "https://api.spotify.com/v1/recommendations?"
+market = "US"
+uris_list = []
+list_one = []
+release_date_min = datetime.datetime.now() - datetime.timedelta(days=n_years * 365)
+ranges = ['short_term', 'medium_term', 'long_term']
+username = user_id
+input_playlist_id = ''
+input_playlist_tracks = []
+input_playlist_list = []
+tracks_list = []
+valid_input = False
+input_playlist_name = str()
+
+# STEP 1 - DECIDE BETWEEN HISTORIC DATA OR SPECIFIC PLAYLIST
+print("Which source would you prefer the script use to build your music taste profile?" '\n'
       "A) Historic data" '\n'
       "B) Specific playlist")
 input_source = pyinputplus.inputChoice((['A', 'B']), prompt="Please enter either A or B: ", caseSensitive=False)
