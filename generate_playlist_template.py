@@ -307,7 +307,7 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--disable-gpu')
 options.add_argument("headless")
-driver = webdriver.Chrome(executable_path='/Users/anthonypoluch/Documents/Spotify/Spotipy/chromedriver')
+driver = webdriver.Chrome(executable_path='/Users/anthonypoluch/Documents/Spotify/Spotipy/chromedriver', chrome_options=options)
 driver.get(webpage_for_token)
 name = Credentials.name
 word = Credentials.word
