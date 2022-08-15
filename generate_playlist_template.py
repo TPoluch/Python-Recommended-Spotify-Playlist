@@ -1,3 +1,5 @@
+import os
+
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.oauth2 import SpotifyOAuth
@@ -6,19 +8,26 @@ import json
 import datetime
 import random
 import pyinputplus
+import time
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 
-# USER CREDENTIALS
-client_id = 'your_client_id'
-client_secret = 'your_client_secret'
-redirect_uri = 'your_redirect_url'
-user_id = "your_user_id"
-archive_file = 'your_desktop_filepath'
+# USER CREDENTIALS - SPOTIFY(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, USER_ID)
+# USER CREDENTIALS - SPOTIFY LOG IN CHOICE CREDENTIALS (USERNAME, PASSWORD) *SET TO USE FACEBOOK LOGIN OPTION BY DEFAULT*
+# CREDENTIAL FILE NOT INCLUDED IN THE GITHUB REPO
+import Credentials
+
+client_id = Credentials.client_id
+client_secret = Credentials.client_secret
+redirect_uri = Credentials.redirect_uri
+user_id = Credentials.user_id
 
 # PREFERENCE VARIABLES
-sample_size = 20  # number of songs from each time span (short,medium,long)
+sample_size = 10  # number of songs from each time span (short,medium,long)
 n_years = 5  # only add songs released within the  last n years
-limit = 15  # number of recommended songs to pull for each seed track
-max_playlist_len = 75
+limit = 5  # number of recommended songs to pull for each seed track
+max_playlist_len = 30
 
 # RETRIEVE TOKEN FOR API CALLS THAT DON'T REQUIRE USER AUTHORIZATION
 AUTH_URL = 'https://accounts.spotify.com/api/token'
@@ -33,7 +42,8 @@ token = access_token
 auth_manager = SpotifyClientCredentials(client_id=client_id,
                                         client_secret=client_secret)
 
-# VARIABLES
+# OTHER VARIABLES (ADJUSTMENTS ARE OPTIONAL)
+archive_file = '/Users/anthonypoluch/Documents/Spotify/Spotipy/archived_recommended_tracks/'
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                client_secret=client_secret,
                                                scope='user-top-read', redirect_uri=redirect_uri))
@@ -57,7 +67,7 @@ print("Which source would you prefer the script use to build your music taste pr
       "B) Specific playlist")
 input_source = pyinputplus.inputChoice((['A', 'B']), prompt="Please enter either A or B: ", caseSensitive=False)
 
-# IF THEY CHOOSE PLAYLIST THEN ENTER PLAYLIST NAME SO WE CAN GET THE ID
+# IF YOU CHOOSE PLAYLIST THEN ENTER PLAYLIST NAME SO YOU CAN GET THE ID
 if str(input_source) == "B" or str(input_source) == "b":
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope='playlist-read-private'))
     play_list = []
@@ -270,10 +280,10 @@ if archive_activation == 'yes':
     uri = list(uri_takeout_archive.difference(tracks_set))
 
 else:
-    print("archive filter inactive")
+    print("Archive filter inactive")
     uri = list(uris_to_set.difference(tracks_set))
 
-# FILTER OUT ANY RECOMMENDED SONGS THAT THE USER ALREADY HAS
+# CHOICE OF WHETHER TO FILTER OUT ANY RECOMMENDED SONGS THAT THE USER ALREADY HAS
 print("Tracks in user library: " + str(len(tracks_set)))
 print("Recommended tracks: " + str(len(uris_to_set)))
 print("Recommended tracks user already has: " + str(len(uris_to_set) - len(uri)))
@@ -290,10 +300,40 @@ else:
 # USER PROMPT TO GET NEW TOKEN (next steps need a token that requires user authentication)
 webpage_for_token = f"https://developer.spotify.com/console/post-playlists/"
 
-# in redirect site copy the "OAuth Token" in the box to the left of the green "Get Token" button
-print("Go here and grab token: " + webpage_for_token)
-token_input = input("Enter token: ")
-token2 = token_input
+# IN ORDER TO AUTOMATE THE USER AUTHENTICATION WE HAVE TO USE SELENIUM TO WEBSCRAPE AND NAVIGATE THROUGH THE
+# PROCESS OF LOGING INTO THE SPOTIFY DEV ACCOUNT AND RETRIVING AN AUTHENTICATION TOKEN ENSURING WE SELECT
+# THE PROPER SCOPES OR THE TOKEN WILL NOT GRANT THE ABILITY TO CREATE A PLAYLIST
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
+options.add_argument("headless")
+driver = webdriver.Chrome(executable_path='/Users/anthonypoluch/Documents/Spotify/Spotipy/chromedriver')
+driver.get(webpage_for_token)
+name = Credentials.name
+word = Credentials.word
+
+WebDriverWait(driver, 10)
+
+search_click = driver.find_element_by_xpath('//*[@id="console-form"]/div[4]/div/span/button')
+search_click.click()
+WebDriverWait(driver, 5)
+
+driver.find_element_by_css_selector('#oauth-modal > div > div > div.modal-body > form > div.required-scopes > div > div > div:nth-child(1) > div').click()
+time.sleep(2)
+driver.find_element_by_css_selector('#oauth-modal > div > div > div.modal-body > form > div.required-scopes > div > div > div:nth-child(2) > div').click()
+time.sleep(2)
+driver.find_element_by_css_selector('#oauthRequestToken').click()
+
+driver.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/button[1]').click()
+driver.find_element_by_xpath('//*[@id="email"]').send_keys(name)
+driver.find_element_by_xpath('//*[@id="pass"]').send_keys(word)
+driver.find_element_by_xpath('//*[@id="loginbutton"]').click()
+
+time.sleep(10)
+
+oauth_input = driver.find_element_by_xpath('//*[@id="oauth-input"]')
+token2 = str(oauth_input.get_attribute('value'))
+print(token2)
 
 # PLAYLIST CREATION
 playlist_endpoint = f"https://api.spotify.com/v1/users/{user_id}/playlists"
@@ -318,10 +358,12 @@ request_body = json.dumps({
 response = requests.post(url=add_songs, data=request_body, headers={"Content-Type": "application/json",
                                                                     "Authorization": f"Bearer {token2}"})
 
+# FINITOOOOOOOOOOO
 print(f'Your playlist is ready at {url}')
 
 if archive_activation == 'yes':
-    uri_archive_str = '| '.join(uri)
+    uri_archive_str1 = '| '.join(uri)
+    uri_archive_str = ' | '+uri_archive_str1+'|'
     f = open(archive_file+"Old_Recommended_Tracks.txt",
              "a")
     f.write(uri_archive_str)
