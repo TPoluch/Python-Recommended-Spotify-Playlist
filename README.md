@@ -1,6 +1,6 @@
 # User-Unique Recommended Songs Playlist
 
-This python script generates a playlist tailored to the users music tastes through use of Spotify's API. It deciphers the users music preferences through analysis of their favorite songs, audio feature tendencies, and other key factors.
+This python script generates a playlist tailored to the users music tastes through use of Spotify's API. It deciphers the users music preferences through analysis of their favorite songs, audio feature tendencies, and other key factors. Automates the sign in process using webscraping (*uses the sign in with Facebook option so adjust lines 81-83 if needed*)
 
 # How it works:
 
