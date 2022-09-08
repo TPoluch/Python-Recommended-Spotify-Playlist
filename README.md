@@ -53,13 +53,21 @@ client_secret = Credentials.client_secret
 redirect_uri = Credentials.redirect_uri
 user_id = Credentials.user_id
 
+# GET USER INPUTS
+print("Which source would you prefer the script use to build your music taste profile?" '\n'
+      "A) Historic data" '\n'
+      "B) Specific playlist")
+input_source = pyinputplus.inputChoice((['A', 'B']), prompt="Please enter either A or B: ", caseSensitive=False)
+
+print("Exclude songs that were recommended in previous executions?")
+archive_activation = pyinputplus.inputYesNo(prompt="Please enter yes or no: ",yesVal='yes',noVal='no', caseSensitive=False)
+
+playlist_name = input("AYO! What you wanna name the new playlist?: ")
+
 # IN ORDER TO AUTOMATE THE USER AUTHENTICATION WE HAVE TO USE SELENIUM TO WEBSCRAPE AND NAVIGATE THROUGH THE
 # PROCESS OF LOGING INTO THE SPOTIFY DEV ACCOUNT AND RETRIVING AN AUTHENTICATION TOKEN ENSURING WE SELECT
 # THE PROPER SCOPES OR THE TOKEN WILL NOT GRANT THE ABILITY TO CREATE A PLAYLIST
 options = Options()
-options.add_argument('--headless')
-options.add_argument('--disable-gpu')
-options.add_argument("headless")
 service = Service(executable_path=ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service,
                           options=options)
@@ -122,12 +130,6 @@ input_playlist_list = []
 tracks_list = []
 valid_input = False
 input_playlist_name = str()
-
-# STEP 1 - DECIDE BETWEEN HISTORIC DATA OR SPECIFIC PLAYLIST
-print("Which source would you prefer the script use to build your music taste profile?" '\n'
-      "A) Historic data" '\n'
-      "B) Specific playlist")
-input_source = pyinputplus.inputChoice((['A', 'B']), prompt="Please enter either A or B: ", caseSensitive=False)
 
 # IF YOU CHOOSE PLAYLIST THEN ENTER PLAYLIST NAME SO YOU CAN GET THE ID
 if str(input_source) == "B" or str(input_source) == "b":
@@ -326,8 +328,7 @@ archive_set = set()
 uri_takeout_archive = set()
 uri = []
 
-print("Exclude songs that were recommended in previous executions?")
-archive_activation = pyinputplus.inputYesNo(prompt="Please enter yes or no: ",yesVal='yes',noVal='no', caseSensitive=False)
+# ARCHIVE STEPS
 
 if archive_activation == 'yes':
     archive_list = []
@@ -368,7 +369,6 @@ token_input = token2
 
 # PLAYLIST CREATION
 playlist_endpoint = f"https://api.spotify.com/v1/users/{user_id}/playlists"
-playlist_name = input("Name your new playlist: ")
 request_body = json.dumps({
     "name": playlist_name,
     "description": str(datetime.datetime.now()),
