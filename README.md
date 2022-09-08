@@ -22,4 +22,4 @@ This python script generates a playlist tailored to the users music tastes throu
     
 3. Pulls in all tracks currently in the users library and compares it to the list of recommended tracks. Any recommended tracks that are already in the user's library are removed from the recommended list.
     
-4. Creates and populates playlist
+4. Creates/populates playlist and returns a url link to the playlist
