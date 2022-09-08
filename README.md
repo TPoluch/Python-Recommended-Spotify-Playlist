@@ -14,7 +14,7 @@ This python script generates a playlist tailored to the users music tastes throu
     
     * What they want to name the new playlist
 
-2. Webscraping is used to bypass the user authentication step needed to create a playlist. This piece operates by opening a webpage (the webpage is headless so nothing will show up on the screen, it will just operate in the background) and navigating to spotify dev. From there it requests a token for creating a public playlist. After that, a login widow is handled using the credentidials populated in the "Credentials" file and then the token populated on the following page is retrieved and stored for later use in the script
+2. Webscraping is used to bypass the user authentication step needed to create a playlist. This piece operates by opening a webpage and navigating to spotify dev. From there it requests a token for creating a public playlist. After that, a login widow is handled using the credentidials populated in the "Credentials" file and then the token populated on the following page is retrieved and stored for later use in the script
 
 2. The data processing starts with using the parameters and inputs defined in step 1 to get a list of tracks to load into the script. Each track gets 'n' recommended tracks by using the track as a "seed track" and using its audio features (energy, danceability, loudness, etc) values as the target aduio feature values for the possible recommended songs. Data is then processed and recommended tracks are identified.
 
