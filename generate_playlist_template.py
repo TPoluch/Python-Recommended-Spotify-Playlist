@@ -1,5 +1,3 @@
-# CHANGE INTERPRETER TO "Python 3.9 (Python_venv_config) /Users/anthonypoluch/env/bin/python3.9"
-
 import datetime
 import json
 import random
