@@ -1,3 +1,5 @@
+# CHANGE INTERPRETER TO "Python 3.9 (Python_venv_config) /Users/anthonypoluch/env/bin/python3.9"
+
 import datetime
 import json
 import random
@@ -22,6 +24,7 @@ client_id = Credentials.client_id
 client_secret = Credentials.client_secret
 redirect_uri = Credentials.redirect_uri
 user_id = Credentials.user_id
+archive_file = Credentials.archive_file_path
 
 # GET USER INPUTS
 print("Which source would you prefer the script use to build your music taste profile?" '\n'
@@ -38,9 +41,6 @@ playlist_name = input("AYO! What you wanna name the new playlist?: ")
 # PROCESS OF LOGING INTO THE SPOTIFY DEV ACCOUNT AND RETRIVING AN AUTHENTICATION TOKEN ENSURING WE SELECT
 # THE PROPER SCOPES OR THE TOKEN WILL NOT GRANT THE ABILITY TO CREATE A PLAYLIST
 options = Options()
-options.add_argument('--headless')
-options.add_argument('--disable-gpu')
-options.add_argument("headless")
 service = Service(executable_path=ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service,
                           options=options)
@@ -86,7 +86,6 @@ auth_manager = SpotifyClientCredentials(client_id=client_id,
                                         client_secret=client_secret)
 
 # OTHER VARIABLES (ADJUSTMENTS ARE OPTIONAL)
-archive_file = Credentials.archive_file_path
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                client_secret=client_secret,
                                                scope='user-top-read', redirect_uri=redirect_uri))
