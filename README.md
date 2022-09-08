@@ -68,6 +68,9 @@ playlist_name = input("AYO! What you wanna name the new playlist?: ")
 # PROCESS OF LOGING INTO THE SPOTIFY DEV ACCOUNT AND RETRIVING AN AUTHENTICATION TOKEN ENSURING WE SELECT
 # THE PROPER SCOPES OR THE TOKEN WILL NOT GRANT THE ABILITY TO CREATE A PLAYLIST
 options = Options()
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
+options.add_argument("headless")
 service = Service(executable_path=ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service,
                           options=options)
